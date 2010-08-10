@@ -1,0 +1,40 @@
+#!/usr/bin/env perl6
+
+sub mkdir-p(@a) {
+    for [\~] @a.map({"$_/"}) {
+        mkdir($_) unless .IO.d
+    }
+}
+
+sub MAIN($module-name) {
+    my $module-dir = $module-name.subst(:g, '::', '-');
+    mkdir $module-dir or die "Can't mkdir '$module-dir': $!";
+    chdir $module-dir or die "Can't chdir '$module-dir': $!";
+    my @module-dirs = 'lib', $module-name.split('::');
+    my $file = @module-dirs.pop;
+    mkdir-p @module-dirs;
+    my $module-fn = join '/', @module-dirs, "$file.pm6";
+
+    my $m = open $module-fn, :w;
+    $m.say: 'use v6;';
+    $m.say: "class $module-name;";
+    $m.say: '';
+    $m.say: '# vim: ft=perl6';
+    $m.close;
+
+    mkdir 't';
+    my $t = open :w, 't/01-load.t';
+    $t.say: 'use v6;';
+    $t.say: 'use Test;';
+    $t.say: 'plan *;';
+    $t.say: '';
+    $t.say: "isa_ok {$module-name}.new(), $module-name;";
+    $t.say: '';
+    $t.say: 'done_testing;';
+    $t.say: '# vim: ft=perl6';
+    $t.close;
+
+
+
+}
+# vim: ft=perl6
